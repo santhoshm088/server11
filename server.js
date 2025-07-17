@@ -55,6 +55,46 @@ app.post("/add-user", async (req, res) => {
   }
 });
 
+
+
+app.get("/config/agent/callerId", async (req, res) => {
+  const { agentArn } = req.query;
+
+  if (!agentArn) {
+    return res.status(400).json({ error: "Missing agentArn" });
+  }
+
+  const agentId = agentArn.split("/").pop(); // Extract last part
+
+  try {
+    if (!client.topology?.isConnected()) {
+      await client.connect();
+    }
+
+    const db = client.db("outbound");
+    const collection = db.collection("outbound");
+
+    const agent = await collection.findOne({ agentId });
+
+    if (agent && agent.selectedNumber) {
+      return res.status(200).json({ outboundNumber: agent.selectedNumber });
+    } else {
+      return res.status(404).json({ error: "Outbound number not found for this agent" });
+    }
+  } catch (err) {
+    console.error("Error fetching outbound number:", err);
+    res.status(500).json({ error: "Internal Server Error", details: err.message });
+  }
+});
+
+
+
 // Start server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+
+
+
+
+
