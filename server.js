@@ -89,6 +89,58 @@ app.get("/config/agent/callerId", async (req, res) => {
 
 
 
+app.post("/get-user", async (req, res) => {
+  try {
+    let { agentId } = req.body;
+    console.log("Fetching current number for agent:", agentId);
+
+    if (!agentId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Agent ID is required'
+      });
+    }
+
+    // Extract only the last part of the ARN if it's a full ARN
+    // const parts = agentId.split("/");
+    // agentId = parts[parts.length - 1];
+    console.log("Extracted Agent ID:", agentId);
+
+    await ensureConnection();
+
+    const db = client.db("outbound");
+    const collection = db.collection("outbound");
+
+    const agent = await collection.findOne({ agentId });
+
+    if (!agent) {
+      return res.status(404).json({
+        success: false,
+        error: 'Agent not found',
+        agentId
+      });
+    }
+
+    console.log('Found agent:', agent);
+
+    res.json({
+      success: true,
+      agentId: agent.agentId,
+      selectedNumber: agent.selectedNumber,
+      lastUpdated: agent.updatedAt || agent.createdAt
+    });
+
+  } catch (error) {
+    console.error('Error fetching agent:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch agent data',
+      message: error.message
+    });
+  }
+});
+
+
 // Start server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
