@@ -103,7 +103,7 @@ app.post("/get-user", async (req, res) => {
     const agent = await collection.findOne({ agentId });
 
     if (agent && agent.selectedNumber) {
-      return res.status(200).json({ outboundNumber: agent.selectedNumber });
+      return res.status(200).json({ selectedNumber: agent.selectedNumber });
     } else {
       return res.status(404).json({ error: "Outbound number not found for this agent" });
     }
