@@ -88,7 +88,6 @@ app.get("/config/agent/callerId", async (req, res) => {
 });
 
 
-
 app.post("/get-user", async (req, res) => {
   try {
     let { agentId } = req.body;
@@ -101,13 +100,7 @@ app.post("/get-user", async (req, res) => {
       });
     }
 
-    // Extract only the last part of the ARN if it's a full ARN
-    // const parts = agentId.split("/");
-    // agentId = parts[parts.length - 1];
-    console.log("Extracted Agent ID:", agentId);
-
     await ensureConnection();
-
     const db = client.db("outbound");
     const collection = db.collection("outbound");
 
