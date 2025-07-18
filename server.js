@@ -89,47 +89,27 @@ app.get("/config/agent/callerId", async (req, res) => {
 
 
 app.post("/get-user", async (req, res) => {
-  try {
-    let { agentId } = req.body;
-    console.log("Fetching current number for agent:", agentId);
 
-    if (!agentId) {
-      return res.status(400).json({
-        success: false,
-        error: 'Agent ID is required'
-      });
+   const { agentId } = req.body;
+  
+  try {
+    if (!client.topology?.isConnected()) {
+      await client.connect();
     }
 
-    await ensureConnection();
     const db = client.db("outbound");
     const collection = db.collection("outbound");
 
     const agent = await collection.findOne({ agentId });
 
-    if (!agent) {
-      return res.status(404).json({
-        success: false,
-        error: 'Agent not found',
-        agentId
-      });
+    if (agent && agent.selectedNumber) {
+      return res.status(200).json({ outboundNumber: agent.selectedNumber });
+    } else {
+      return res.status(404).json({ error: "Outbound number not found for this agent" });
     }
-
-    console.log('Found agent:', agent);
-
-    res.json({
-      success: true,
-      agentId: agent.agentId,
-      selectedNumber: agent.selectedNumber,
-      lastUpdated: agent.updatedAt || agent.createdAt
-    });
-
-  } catch (error) {
-    console.error('Error fetching agent:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to fetch agent data',
-      message: error.message
-    });
+  } catch (err) {
+    console.error("Error fetching outbound number:", err);
+    res.status(500).json({ error: "Internal Server Error", details: err.message });
   }
 });
 
